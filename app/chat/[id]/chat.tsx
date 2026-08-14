@@ -542,7 +542,7 @@ function Logo() {
         src={BRAND.logoSrc}
         alt={BRAND.name}
         style={{
-          width: 'min(420px, 70%)',
+          width: 'min(560px, 85%)',
           height: 'auto',
           display: 'block',
         }}

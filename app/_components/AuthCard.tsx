@@ -66,7 +66,7 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
           <img
             src={BRAND.logoSrc}
             alt={BRAND.name}
-            style={{ width: 'min(280px, 70%)', height: 'auto', display: 'block', margin: '0 auto 24px' }}
+            style={{ width: 'min(380px, 88%)', height: 'auto', display: 'block', margin: '0 auto 24px' }}
           />
         ) : (
           <div

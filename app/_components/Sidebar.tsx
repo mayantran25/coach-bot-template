@@ -48,7 +48,7 @@ export function Sidebar({
           <img
             src={BRAND.logoSrc}
             alt={BRAND.name}
-            style={{ width: '100%', maxWidth: 210, height: 'auto', display: 'block' }}
+            style={{ width: '100%', maxWidth: 230, height: 'auto', display: 'block' }}
           />
         </Link>
       )}
