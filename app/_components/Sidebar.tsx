@@ -6,7 +6,15 @@ import type { ChatListItem } from '@/lib/db';
 import { createClient } from '@/lib/supabase/client';
 import { BRAND } from '@/lib/brand';
 
-export function Sidebar({ chats, email }: { chats: ChatListItem[]; email: string | null }) {
+export function Sidebar({
+  chats,
+  email,
+  isAdmin,
+}: {
+  chats: ChatListItem[];
+  email: string | null;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const activeId = pathname?.startsWith('/chat/') ? pathname.split('/')[2] : null;
@@ -153,6 +161,32 @@ export function Sidebar({ chats, email }: { chats: ChatListItem[]; email: string
             {email}
           </div>
         )}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            style={{
+              padding: '8px 12px',
+              fontSize: 13,
+              color: '#666',
+              textDecoration: 'none',
+              borderRadius: 8,
+            }}
+          >
+            Admin
+          </Link>
+        )}
+        <Link
+          href="/account"
+          style={{
+            padding: '8px 12px',
+            fontSize: 13,
+            color: '#666',
+            textDecoration: 'none',
+            borderRadius: 8,
+          }}
+        >
+          Account
+        </Link>
         <button
           onClick={signOut}
           style={{

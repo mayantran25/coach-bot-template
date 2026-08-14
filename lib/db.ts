@@ -119,6 +119,73 @@ export async function saveChat({
   }
 }
 
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  createdAt: string;
+  chatCount: number;
+  messageCount: number;
+  lastActiveAt: string | null;
+};
+
+/** Admin-only: every user, with chat/message counts. Bypasses RLS (direct DB connection). */
+export async function listAllUsersForAdmin(): Promise<AdminUserRow[]> {
+  const sql = db();
+  const rows = await sql<
+    Array<{
+      id: string;
+      email: string;
+      created_at: Date;
+      chat_count: number;
+      message_count: number;
+      last_active_at: Date | null;
+    }>
+  >`
+    SELECT
+      u.id,
+      u.email,
+      u.created_at,
+      COUNT(DISTINCT c.id)::int AS chat_count,
+      COUNT(m.id)::int AS message_count,
+      MAX(m.created_at) AS last_active_at
+    FROM auth.users u
+    LEFT JOIN chats c ON c.user_id = u.id
+    LEFT JOIN messages m ON m.chat_id = c.id
+    GROUP BY u.id, u.email, u.created_at
+    ORDER BY last_active_at DESC NULLS LAST, u.created_at DESC
+  `;
+  return rows.map((r) => ({
+    id: r.id,
+    email: r.email,
+    createdAt: r.created_at.toISOString(),
+    chatCount: r.chat_count,
+    messageCount: r.message_count,
+    lastActiveAt: r.last_active_at ? r.last_active_at.toISOString() : null,
+  }));
+}
+
+/** Admin-only: one user's email, for page headers. */
+export async function getUserEmailForAdmin(userId: string): Promise<string | null> {
+  const sql = db();
+  const rows = await sql<Array<{ email: string }>>`
+    SELECT email FROM auth.users WHERE id = ${userId} LIMIT 1
+  `;
+  return rows[0]?.email ?? null;
+}
+
+/** Admin-only: load a chat's messages regardless of who owns it. */
+export async function loadChatForAdmin(chatId: string): Promise<UIMessage[]> {
+  const sql = db();
+  const rows = await sql<Array<{ id: string; role: string; parts: unknown; created_at: Date }>>`
+    SELECT id, role, parts, created_at FROM messages WHERE chat_id = ${chatId} ORDER BY created_at ASC
+  `;
+  return rows.map((r) => ({
+    id: r.id,
+    role: r.role as UIMessage['role'],
+    parts: r.parts as UIMessage['parts'],
+  })) as UIMessage[];
+}
+
 export async function searchDocs(
   queryEmbedding: number[],
   k = 6,
