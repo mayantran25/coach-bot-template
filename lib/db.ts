@@ -214,6 +214,83 @@ export async function listRecentUserMessagesForAdmin(
   return rows.map((r) => r.text).filter(Boolean);
 }
 
+export type SignupCodeRow = {
+  id: number;
+  code: string;
+  label: string | null;
+  usedBy: string | null;
+  usedAt: string | null;
+  createdAt: string;
+};
+
+/** Admin-only: every invite code, most recent first. */
+export async function listSignupCodesForAdmin(): Promise<SignupCodeRow[]> {
+  const sql = db();
+  const rows = await sql<
+    Array<{
+      id: number;
+      code: string;
+      label: string | null;
+      used_by: string | null;
+      used_at: Date | null;
+      created_at: Date;
+    }>
+  >`
+    SELECT id, code, label, used_by, used_at, created_at
+    FROM signup_codes
+    ORDER BY created_at DESC
+  `;
+  return rows.map((r) => ({
+    id: r.id,
+    code: r.code,
+    label: r.label,
+    usedBy: r.used_by,
+    usedAt: r.used_at ? r.used_at.toISOString() : null,
+    createdAt: r.created_at.toISOString(),
+  }));
+}
+
+/** Admin-only: mint a new one-time invite code. */
+export async function createSignupCode(label?: string): Promise<string> {
+  const sql = db();
+  // Human-typable: 4 groups of 4 uppercase alphanumerics, e.g. "K3F9-Q2M7".
+  const code = randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
+  const formatted = `${code.slice(0, 4)}-${code.slice(4)}`;
+  await sql`INSERT INTO signup_codes (code, label) VALUES (${formatted}, ${label ?? null})`;
+  return formatted;
+}
+
+/**
+ * Atomically reserves an unused code so two concurrent signups can't both
+ * claim it. Reservations older than 5 minutes are considered abandoned and
+ * reclaimable (e.g. the signup attempt failed partway through).
+ * Returns the code's row id if reserved, or null if the code is invalid/used.
+ */
+export async function reserveSignupCode(code: string): Promise<number | null> {
+  const sql = db();
+  const rows = await sql<Array<{ id: number }>>`
+    UPDATE signup_codes
+    SET reserved_at = now()
+    WHERE code = ${code.trim().toUpperCase()}
+      AND used_by IS NULL
+      AND (reserved_at IS NULL OR reserved_at < now() - interval '5 minutes')
+    RETURNING id
+  `;
+  return rows[0]?.id ?? null;
+}
+
+/** Marks a reserved code as consumed by a newly created user. */
+export async function finalizeSignupCode(codeId: number, userId: string): Promise<void> {
+  const sql = db();
+  await sql`UPDATE signup_codes SET used_by = ${userId}, used_at = now() WHERE id = ${codeId}`;
+}
+
+/** Releases a reservation without consuming it (e.g. account creation failed). */
+export async function releaseSignupCode(codeId: number): Promise<void> {
+  const sql = db();
+  await sql`UPDATE signup_codes SET reserved_at = NULL WHERE id = ${codeId}`;
+}
+
 export async function searchDocs(
   queryEmbedding: number[],
   k = 6,

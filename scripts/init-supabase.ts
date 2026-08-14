@@ -6,9 +6,10 @@
  *
  * What it does:
  *   1. Enables the pgvector extension
- *   2. Creates the `chats`, `messages`, `documents`, `user_memory` tables
+ *   2. Creates the `chats`, `messages`, `documents`, `user_memory`, `signup_codes` tables
  *   3. Sets up Row Level Security policies (users can only see their own data)
  *   4. Creates the `match_documents` RPC for vector similarity search
+ *   5. Creates the `signup_codes` table (optional invite-code gating — see /admin)
  *
  * Idempotent — safe to re-run; it will drop and recreate the tables.
  * (If you have data you want to preserve, back up first.)
@@ -24,16 +25,17 @@ if (!process.env.DATABASE_URL) {
 
 const sql = postgres(process.env.DATABASE_URL, { ssl: 'require', max: 4 });
 
-console.log('1/4 Enabling pgvector extension...');
+console.log('1/5 Enabling pgvector extension...');
 await sql`CREATE EXTENSION IF NOT EXISTS vector`;
 
-console.log('2/4 Dropping old tables (if present)...');
+console.log('2/5 Dropping old tables (if present)...');
 await sql`DROP TABLE IF EXISTS messages CASCADE`;
 await sql`DROP TABLE IF EXISTS chats CASCADE`;
 await sql`DROP TABLE IF EXISTS documents CASCADE`;
 await sql`DROP TABLE IF EXISTS user_memory CASCADE`;
+await sql`DROP TABLE IF EXISTS signup_codes CASCADE`;
 
-console.log('3/4 Creating schema + RLS policies...');
+console.log('3/5 Creating schema + RLS policies...');
 
 // Shared RAG corpus — readable by any authenticated user.
 await sql`
@@ -97,7 +99,7 @@ await sql`ALTER TABLE user_memory ENABLE ROW LEVEL SECURITY`;
 await sql`CREATE POLICY "user_memory: owner can read" ON user_memory FOR SELECT TO authenticated USING (auth.uid() = user_id)`;
 await sql`CREATE POLICY "user_memory: owner can insert" ON user_memory FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)`;
 
-console.log('4/4 Creating match_documents RPC...');
+console.log('4/5 Creating match_documents RPC...');
 await sql`
   CREATE OR REPLACE FUNCTION match_documents(query_embedding VECTOR(1536), match_count INT DEFAULT 6)
   RETURNS TABLE (source TEXT, content TEXT, similarity FLOAT)
@@ -108,6 +110,23 @@ await sql`
     LIMIT match_count;
   $$
 `;
+
+// Optional invite-code gating for signup — not RLS-protected since it's only
+// ever touched server-side (via the service role / direct DB connection),
+// never exposed through PostgREST to the anon/authenticated roles.
+console.log('5/5 Creating signup_codes table...');
+await sql`
+  CREATE TABLE signup_codes (
+    id BIGSERIAL PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
+    label TEXT,
+    reserved_at TIMESTAMPTZ,
+    used_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+await sql`CREATE INDEX signup_codes_code_idx ON signup_codes (code)`;
 
 await sql.end();
 console.log('\nDone. Your Supabase project is ready.');

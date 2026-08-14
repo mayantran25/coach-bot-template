@@ -10,13 +10,14 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!email.trim() || !password) return;
+    if (!email.trim() || !password || (mode === 'signup' && !code.trim())) return;
     setError(null);
     setInfo(null);
     setLoading(true);
@@ -28,14 +29,18 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
         router.push(nextPath || '/');
         router.refresh();
       } else {
-        const { error, data } = await supabase.auth.signUp({ email, password });
+        const res = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, code }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? 'Could not create account.');
+        // Account is created and confirmed server-side — sign in normally now.
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        if (data.session) {
-          router.push(nextPath || '/');
-          router.refresh();
-        } else {
-          setInfo('Check your email for a confirmation link.');
-        }
+        router.push(nextPath || '/');
+        router.refresh();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -124,6 +129,18 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
             disabled={loading}
             style={inputStyle}
           />
+          {mode === 'signup' && (
+            <input
+              type="text"
+              placeholder="Invite code"
+              autoComplete="off"
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              disabled={loading}
+              style={inputStyle}
+            />
+          )}
           {error && (
             <div style={{ color: '#c43657', fontSize: 14, lineHeight: 1.4 }}>{error}</div>
           )}
@@ -132,7 +149,7 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
           )}
           <button
             type="submit"
-            disabled={loading || !email.trim() || !password}
+            disabled={loading || !email.trim() || !password || (mode === 'signup' && !code.trim())}
             style={{
               padding: '12px 16px',
               fontSize: 15,

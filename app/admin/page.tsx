@@ -15,11 +15,16 @@ export default async function AdminPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Admin</h1>
-        <Link href="/admin/insights" style={{ fontSize: 14, color: '#111', fontWeight: 500 }}>
-          Topics & Insights →
-        </Link>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <Link href="/admin/codes" style={{ fontSize: 14, color: '#111', fontWeight: 500 }}>
+            Invite Codes →
+          </Link>
+          <Link href="/admin/insights" style={{ fontSize: 14, color: '#111', fontWeight: 500 }}>
+            Topics & Insights →
+          </Link>
+        </div>
       </div>
       <p style={{ color: '#666', fontSize: 14, marginBottom: 28 }}>
         {users.length} user{users.length === 1 ? '' : 's'} · visible only to {process.env.ADMIN_EMAILS}
