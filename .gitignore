@@ -19,3 +19,8 @@ public/*.svg
 !public/.gitkeep
 !public/logo.png
 .env*
+
+# Session-only temp scripts (ingestion/derivation shims created and deleted
+# within a single working session) — never meant to be committed.
+scripts/_session_*.mjs
+scripts/_session_*.ts
