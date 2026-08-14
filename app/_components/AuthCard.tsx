@@ -60,13 +60,13 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
         padding: 24,
       }}
     >
-      <div style={{ width: '100%', maxWidth: 400, position: 'relative' }}>
+      <div style={{ width: '100%', maxWidth: 460, position: 'relative' }}>
         {BRAND.logoSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={BRAND.logoSrc}
             alt={BRAND.name}
-            style={{ width: 'min(380px, 88%)', height: 'auto', display: 'block', margin: '0 auto 24px' }}
+            style={{ width: 'min(460px, 100%)', height: 'auto', display: 'block', margin: '0 auto 24px' }}
           />
         ) : (
           <div
