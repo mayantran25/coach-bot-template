@@ -17,5 +17,5 @@ public/*.jpg
 public/*.jpeg
 public/*.svg
 !public/.gitkeep
-!public/logo.jpg
+!public/logo.png
 .env*
