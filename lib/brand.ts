@@ -31,8 +31,8 @@ export const BRAND = {
    */
   logoSrc: '',
 
-  /** Where the "Back to Dashboard" sidebar link goes. */
-  dashboardUrl: 'https://livingbraveai.com/dashboard',
+  /** Where the "Back to Dashboard" sidebar link goes. Leave empty ('') to hide the button entirely. */
+  dashboardUrl: '',
 
   /** Heading shown when a chat is empty. */
   emptyHeroHeading: 'How can I help you today?',
