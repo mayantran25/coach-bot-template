@@ -29,7 +29,7 @@ export const BRAND = {
    * To use your own logo: drop the file at `public/your-logo.webp` and set
    * logoSrc to '/your-logo.webp'. (Logo files are gitignored — see .gitignore.)
    */
-  logoSrc: '',
+  logoSrc: '/logo.jpg',
 
   /** Where the "Back to Dashboard" sidebar link goes. Leave empty ('') to hide the button entirely. */
   dashboardUrl: '',

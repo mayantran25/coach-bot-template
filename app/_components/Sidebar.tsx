@@ -42,6 +42,17 @@ export function Sidebar({
         flexShrink: 0,
       }}
     >
+      {BRAND.logoSrc && (
+        <Link href="/" style={{ display: 'block', padding: '4px 12px 0' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={BRAND.logoSrc}
+            alt={BRAND.name}
+            style={{ width: '100%', maxWidth: 210, height: 'auto', display: 'block' }}
+          />
+        </Link>
+      )}
+
       <Link
         href="/"
         style={{
