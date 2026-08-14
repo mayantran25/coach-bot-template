@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/api/signup'];
+const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/api/signup', '/api/webhooks/gohighlevel'];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
