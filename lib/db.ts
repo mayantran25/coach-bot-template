@@ -186,6 +186,20 @@ export async function loadChatForAdmin(chatId: string): Promise<UIMessage[]> {
   })) as UIMessage[];
 }
 
+/** Admin-only: recent user messages (text only) across everyone, for topic reports. */
+export async function listRecentUserMessagesForAdmin(limit = 300): Promise<string[]> {
+  const sql = db();
+  const rows = await sql<Array<{ text: string }>>`
+    SELECT string_agg(p->>'text', ' ') AS text
+    FROM messages m, jsonb_array_elements(m.parts) p
+    WHERE m.role = 'user' AND p->>'type' = 'text'
+    GROUP BY m.id, m.created_at
+    ORDER BY m.created_at DESC
+    LIMIT ${limit}
+  `;
+  return rows.map((r) => r.text).filter(Boolean);
+}
+
 export async function searchDocs(
   queryEmbedding: number[],
   k = 6,
