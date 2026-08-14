@@ -6,16 +6,23 @@ import { isAdminEmail } from '@/lib/admin';
 import { listRecentUserMessagesForAdmin } from '@/lib/db';
 import { BRAND } from '@/lib/brand';
 
-export async function POST() {
+export async function POST(req: Request) {
   const user = await getUser();
   if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 });
   }
 
-  const messages = await listRecentUserMessagesForAdmin(300);
+  const body = await req.json().catch(() => ({}));
+  const since: string | undefined = body.since || undefined;
+  const until: string | undefined = body.until || undefined;
+
+  const messages = await listRecentUserMessagesForAdmin(300, since, until);
   if (messages.length === 0) {
     return NextResponse.json({
-      report: 'No user messages yet — check back once people have started chatting.',
+      report:
+        since || until
+          ? 'No user messages in that date range.'
+          : 'No user messages yet — check back once people have started chatting.',
       sampleSize: 0,
     });
   }

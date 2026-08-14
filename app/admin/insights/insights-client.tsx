@@ -7,12 +7,18 @@ export function InsightsClient() {
   const [sampleSize, setSampleSize] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [since, setSince] = useState('');
+  const [until, setUntil] = useState('');
 
   async function generate() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/insights', { method: 'POST' });
+      const res = await fetch('/api/admin/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ since: since || undefined, until: until || undefined }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to generate report.');
       setReport(data.report);
@@ -26,6 +32,49 @@ export function InsightsClient() {
 
   return (
     <div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16, flexWrap: 'wrap' }}>
+        <div>
+          <label style={labelStyle}>From</label>
+          <input
+            type="date"
+            value={since}
+            onChange={(e) => setSince(e.target.value)}
+            disabled={loading}
+            style={dateInputStyle}
+          />
+        </div>
+        <div>
+          <label style={labelStyle}>To</label>
+          <input
+            type="date"
+            value={until}
+            onChange={(e) => setUntil(e.target.value)}
+            disabled={loading}
+            style={dateInputStyle}
+          />
+        </div>
+        {(since || until) && (
+          <button
+            onClick={() => {
+              setSince('');
+              setUntil('');
+            }}
+            disabled={loading}
+            style={{
+              padding: '9px 12px',
+              fontSize: 13,
+              color: '#666',
+              background: 'transparent',
+              border: '1px solid #ddd',
+              borderRadius: 8,
+              cursor: 'pointer',
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       <button
         onClick={generate}
         disabled={loading}
@@ -50,7 +99,15 @@ export function InsightsClient() {
         <div>
           {sampleSize !== null && (
             <p style={{ fontSize: 12, color: '#999', marginBottom: 12 }}>
-              Based on the {sampleSize} most recent user messages.
+              Based on {sampleSize} user message{sampleSize === 1 ? '' : 's'}
+              {since || until ? (
+                <>
+                  {' '}
+                  {since && `from ${since}`} {until && `to ${until}`}
+                </>
+              ) : (
+                ' (most recent).'
+              )}
             </p>
           )}
           <div
@@ -71,3 +128,17 @@ export function InsightsClient() {
     </div>
   );
 }
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  color: '#666',
+  marginBottom: 4,
+};
+
+const dateInputStyle: React.CSSProperties = {
+  padding: '8px 10px',
+  fontSize: 13,
+  border: '1px solid #ddd',
+  borderRadius: 8,
+};

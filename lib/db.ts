@@ -186,13 +186,27 @@ export async function loadChatForAdmin(chatId: string): Promise<UIMessage[]> {
   })) as UIMessage[];
 }
 
-/** Admin-only: recent user messages (text only) across everyone, for topic reports. */
-export async function listRecentUserMessagesForAdmin(limit = 300): Promise<string[]> {
+/**
+ * Admin-only: recent user messages (text only) across everyone, for topic
+ * reports. `since`/`until` are optional ISO date strings (inclusive/exclusive);
+ * omit either to leave that end of the range open.
+ */
+export async function listRecentUserMessagesForAdmin(
+  limit = 300,
+  since?: string,
+  until?: string,
+): Promise<string[]> {
   const sql = db();
+  const sinceDate = since ? new Date(since) : new Date(0);
+  // Add a day so an "until" date picked in the UI includes that whole day.
+  const untilDate = until
+    ? new Date(new Date(until).getTime() + 24 * 60 * 60 * 1000)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000);
   const rows = await sql<Array<{ text: string }>>`
     SELECT string_agg(p->>'text', ' ') AS text
     FROM messages m, jsonb_array_elements(m.parts) p
     WHERE m.role = 'user' AND p->>'type' = 'text'
+      AND m.created_at >= ${sinceDate} AND m.created_at < ${untilDate}
     GROUP BY m.id, m.created_at
     ORDER BY m.created_at DESC
     LIMIT ${limit}
