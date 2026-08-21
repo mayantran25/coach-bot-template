@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getUser } from '@/lib/supabase/server';
 import { DeleteAccountButton } from './delete-button';
+import { ChangePasswordForm } from './change-password-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,10 @@ export default async function AccountPage() {
       <h1 style={{ fontSize: 22, fontWeight: 600, margin: '12px 0 4px' }}>Account</h1>
       <p style={{ fontSize: 14, color: '#666', margin: '0 0 28px' }}>{user.email}</p>
 
-      <DeleteAccountButton />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <ChangePasswordForm />
+        <DeleteAccountButton />
+      </div>
     </div>
   );
 }

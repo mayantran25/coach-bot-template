@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { BRAND } from '@/lib/brand';
+import { PasswordField } from './PasswordField';
 
 export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPath: string }) {
   const router = useRouter();
@@ -118,17 +119,24 @@ export function AuthCard({ mode, nextPath }: { mode: 'login' | 'signup'; nextPat
             disabled={loading}
             style={inputStyle}
           />
-          <input
-            type="password"
+          <PasswordField
             placeholder="Password"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             required
             minLength={6}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             disabled={loading}
             style={inputStyle}
           />
+          {mode === 'login' && (
+            <Link
+              href="/forgot-password"
+              style={{ fontSize: 13, color: '#666', textAlign: 'right', marginTop: -6 }}
+            >
+              Forgot password?
+            </Link>
+          )}
           {mode === 'signup' && (
             <input
               type="text"
