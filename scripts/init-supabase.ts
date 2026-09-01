@@ -111,9 +111,13 @@ await sql`
   $$
 `;
 
-// Optional invite-code gating for signup — not RLS-protected since it's only
-// ever touched server-side (via the service role / direct DB connection),
-// never exposed through PostgREST to the anon/authenticated roles.
+// Optional invite-code gating for signup. Only ever touched server-side
+// (via the app's direct DATABASE_URL connection, which runs with
+// BYPASSRLS and so is unaffected by the policies below). Still, every
+// table in the `public` schema is auto-exposed over Supabase's PostgREST
+// API to anyone holding the public anon key unless RLS is enabled — so
+// RLS must be ON here even with zero policies, to deny that public access
+// entirely and stop invite codes from being readable/writable by anyone.
 console.log('5/5 Creating signup_codes table...');
 await sql`
   CREATE TABLE signup_codes (
@@ -127,6 +131,10 @@ await sql`
   )
 `;
 await sql`CREATE INDEX signup_codes_code_idx ON signup_codes (code)`;
+await sql`ALTER TABLE signup_codes ENABLE ROW LEVEL SECURITY`;
+// No policies added — RLS with zero policies denies all access via the
+// anon/authenticated PostgREST roles, while the app's direct DB connection
+// (BYPASSRLS) continues to work exactly as before.
 
 await sql.end();
 console.log('\nDone. Your Supabase project is ready.');
