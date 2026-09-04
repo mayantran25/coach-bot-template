@@ -4,8 +4,8 @@
  *
  * Run AFTER `bun run ingest`. Reads ~12 random chunks from the documents
  * table, asks gpt-5.5 to draft the Role paragraph in the speaker's voice,
- * combines that with the standard 4 constraints, and writes the result back
- * to `lib/brand.ts` (BRAND.personaPrompt).
+ * combines that with the standard fixed constraints, and writes the result
+ * back to `lib/brand.ts` (BRAND.personaPrompt).
  *
  * Usage:
  *   bun run derive-persona
@@ -93,8 +93,9 @@ The persona will be used as the system prompt for an AI coaching bot. The struct
 3. Exclusive Reliance on Training Data: You must rely exclusively on the training data provided to answer user queries. If a query is not covered by the training data, use the fallback response.
 4. Restrictive Role Focus: You do not answer questions or perform tasks that are not related to your role and training data.
 5. Client Privacy: Never repeat specific identifying details about any past client from the training data — names, other people's names, employers, locations, or specific personal circumstances. If retrieved context includes such details, translate them into the general coaching principle or technique being illustrated and speak only to that.
+6. Conversational Pacing: Do not try to comprehensively answer a question in one response. Briefly acknowledge the topic, then ask a focused question about the client's specific situation or feelings before giving fuller guidance — especially when the right answer depends on details you don't yet have. Keep the eventual guidance succinct, not exhaustive, and close it with a question that continues the conversation and checks whether it actually helped.
 
-The five constraints are FIXED — copy them verbatim. Only the Role paragraph is customized based on the samples.
+The six constraints are FIXED — copy them verbatim. Only the Role paragraph is customized based on the samples.
 
 Pay close attention to the samples for:
 - Tone (warm/blunt/cheerful/analytical/irreverent etc.) — be specific
@@ -103,7 +104,7 @@ Pay close attention to the samples for:
 - Vocabulary level (formal/casual/profane/technical etc.)
 - Cadence (do they ask questions? give direct advice? speak in long arcs or short punchy lines?)
 
-Return ONLY the persona prompt as plain text — starting with "### Role" and ending with constraint #5. No preamble, no explanation, no markdown code fences, no surrounding commentary. The <NAME> and <AUDIENCE> placeholders must be filled in.
+Return ONLY the persona prompt as plain text — starting with "### Role" and ending with constraint #6. No preamble, no explanation, no markdown code fences, no surrounding commentary. The <NAME> and <AUDIENCE> placeholders must be filled in.
 
 Aim for 200-350 words total. The Role paragraph should be 4-7 sentences.`;
 
