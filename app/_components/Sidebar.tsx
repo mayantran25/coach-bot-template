@@ -10,10 +10,14 @@ export function Sidebar({
   chats,
   email,
   isAdmin,
+  open,
+  onClose,
 }: {
   chats: ChatListItem[];
   email: string | null;
   isAdmin?: boolean;
+  open?: boolean;
+  onClose?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -28,20 +32,35 @@ export function Sidebar({
 
   return (
     <aside
+      className={`cb-sidebar ${open ? 'cb-sidebar-open' : ''}`}
       style={{
-        width: 260,
-        height: '100vh',
         background: '#fafafa',
-        borderRight: '1px solid #ececec',
         padding: '20px 14px',
         display: 'flex',
         flexDirection: 'column',
         gap: 18,
-        position: 'sticky',
-        top: 0,
-        flexShrink: 0,
       }}
     >
+      <button
+        type="button"
+        className="cb-sidebar-close"
+        aria-label="Close menu"
+        onClick={onClose}
+        style={{
+          alignSelf: 'flex-end',
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          border: '1px solid #e0e0e0',
+          background: '#fff',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        <CloseIcon />
+      </button>
+
       {BRAND.logoSrc && (
         <Link href="/" style={{ display: 'block', padding: '4px 12px 0' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,6 +74,7 @@ export function Sidebar({
 
       <Link
         href="/"
+        onClick={onClose}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -129,6 +149,7 @@ export function Sidebar({
               key={c.id}
               href={`/chat/${c.id}`}
               title={c.title}
+              onClick={onClose}
               style={{
                 padding: '8px 12px',
                 fontSize: 14,
@@ -215,5 +236,22 @@ export function Sidebar({
         </button>
       </div>
     </aside>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#111"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
   );
 }

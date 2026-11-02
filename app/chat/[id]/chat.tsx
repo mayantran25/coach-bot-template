@@ -119,7 +119,7 @@ export function Chat({
             style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '32px 24px 160px',
+              padding: '56px 24px 160px',
             }}
           >
             <div
