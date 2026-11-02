@@ -1,4 +1,5 @@
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
+import { after } from 'next/server';
 import { openai } from '@ai-sdk/openai';
 import { embedOne } from '@/lib/embed';
 import {
@@ -60,9 +61,14 @@ export async function POST(req: Request) {
   return result.toUIMessageStreamResponse({
     originalMessages: messages,
     onFinish: ({ messages: finalMessages }) => {
-      // Persist + extract memory in parallel; both fire-and-forget.
-      void saveChat({ chatId, userId: user.id, messages: finalMessages });
-      void extractAndStoreFacts({ userId: user.id, chatId, messages: finalMessages });
+      // Vercel can freeze/tear down the function the instant the streamed
+      // response finishes sending — a bare fire-and-forget promise here can
+      // get cut off mid-write. after() tells the platform to keep the
+      // function alive until this work actually completes.
+      after(async () => {
+        await saveChat({ chatId, userId: user.id, messages: finalMessages });
+        await extractAndStoreFacts({ userId: user.id, chatId, messages: finalMessages });
+      });
     },
   });
 }
