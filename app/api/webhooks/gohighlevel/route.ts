@@ -1,5 +1,17 @@
+import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createSignupCode } from '@/lib/db';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  // Different lengths already tell a timing attacker something, but there's
+  // nothing secret-dependent left to leak once we bail out here — the real
+  // protection is comparing the matching-length case in constant time.
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
 
 /**
  * Called by a GoHighLevel workflow (e.g. "tag added: paid" or "order paid")
@@ -16,9 +28,14 @@ import { createSignupCode } from '@/lib/db';
  * an email step alongside the `signupUrl` field.
  */
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  if (!rateLimit(`ghl-webhook:${ip}`, 30, 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  }
+
   const url = new URL(req.url);
   const secret = url.searchParams.get('secret');
-  if (!process.env.GHL_WEBHOOK_SECRET || secret !== process.env.GHL_WEBHOOK_SECRET) {
+  if (!process.env.GHL_WEBHOOK_SECRET || !safeEqual(secret ?? '', process.env.GHL_WEBHOOK_SECRET)) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 401 });
   }
 

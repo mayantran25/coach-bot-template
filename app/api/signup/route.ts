@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { reserveSignupCode, finalizeSignupCode, releaseSignupCode } from '@/lib/db';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 /**
  * Invite-code-gated signup. Creates the account server-side via the Admin
@@ -9,6 +10,15 @@ import { reserveSignupCode, finalizeSignupCode, releaseSignupCode } from '@/lib/
  * signs itself in normally with the same email/password.
  */
 export async function POST(req: Request) {
+  // Throttle invite-code guessing: 8 attempts per 10 minutes per IP.
+  const ip = getClientIp(req);
+  if (!rateLimit(`signup:${ip}`, 8, 10 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: 'Too many attempts. Please wait a few minutes and try again.' },
+      { status: 429 },
+    );
+  }
+
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === 'string' ? body.email.trim() : '';
   const password = typeof body?.password === 'string' ? body.password : '';
